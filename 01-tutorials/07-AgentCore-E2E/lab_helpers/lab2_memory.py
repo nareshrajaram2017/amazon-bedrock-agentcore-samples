@@ -177,4 +177,4 @@ def setup_memory():
 
 def delete_memory(memory_hook):
     # *** AGENTCORE MEMORY USAGE *** - Delete memory resource
-    memory_client.delete_memory(memory_id=memory_hook.memory_id)
+    memory_client.delete_memory(memoryId=memory_hook.memory_id)
