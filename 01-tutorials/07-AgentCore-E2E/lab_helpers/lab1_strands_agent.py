@@ -1,5 +1,7 @@
 from strands.tools import tool
 
+MODEL_ID = "us.anthropic.claude-3-7-sonnet-20250219-v1:0"
+
 # System prompt defining the agent's role and capabilities
 SYSTEM_PROMPT = """You are a helpful and professional customer support assistant for an e-commerce company.
 Your role is to:
@@ -15,6 +17,7 @@ You have access to the following tools:
 4. get_product_info() - To get information about a specific product
 
 Always use the appropriate tool to get accurate, up-to-date information rather than guessing."""
+
 
 @tool
 def get_shipping_info(order_id: str) -> str:
