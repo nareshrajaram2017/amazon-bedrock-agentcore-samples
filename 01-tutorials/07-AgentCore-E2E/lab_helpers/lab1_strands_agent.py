@@ -1,11 +1,4 @@
-# Import libraries
-from strands import Agent
-from strands.models import BedrockModel
 from strands.tools import tool
-
-# ============================================================================
-# AGENT CONFIGURATION
-# ============================================================================
 
 # System prompt defining the agent's role and capabilities
 SYSTEM_PROMPT = """You are a helpful and professional customer support assistant for an e-commerce company.
@@ -22,18 +15,6 @@ You have access to the following tools:
 4. get_product_info() - To get information about a specific product
 
 Always use the appropriate tool to get accurate, up-to-date information rather than guessing."""
-
-# Bedrock model configuration
-MODEL = BedrockModel(
-    model_id="us.anthropic.claude-sonnet-4-20250514-v1:0",
-    temperature=0.3,
-    region_name="us-east-1",
-)
-
-# ============================================================================
-# AGENT TOOLS
-# ============================================================================
-
 
 @tool
 def get_shipping_info(order_id: str) -> str:

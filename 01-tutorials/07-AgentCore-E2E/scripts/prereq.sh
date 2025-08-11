@@ -86,10 +86,10 @@ echo "🔧 Starting deployment of Cognito stack..."
 deploy_stack "$COGNITO_STACK_NAME" "$COGNITO_TEMPLATE_FILE"
 cognito_exit_code=$?
 
-echo "🔍 Fetching Knowledge Base and Data Source IDs from SSM..."
+# echo "🔍 Fetching Knowledge Base and Data Source IDs from SSM..."
 
 # ----- 6. Create Knowledge Base -----
 
-python prerequisite/knowledge_base.py --mode create
+# python prerequisite/knowledge_base.py --mode create
 
 echo "✅ Deployment complete."
