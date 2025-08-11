@@ -37,7 +37,7 @@ def create_or_get_memory_resource():
     try:
         memory_id = get_ssm_parameter("/app/customersupport/agentcore/memory_id")
         memory_client.gmcp_client.get_memory(memoryId=memory_id)
-        return memory_id
+        return memory_client, memory_id
     except:
         try:
             strategies = [
@@ -68,9 +68,9 @@ def create_or_get_memory_resource():
                 put_ssm_parameter("/app/customersupport/agentcore/memory_id", memory_id)
             except:
                 pass
-            return memory_id
+            return memory_client, memory_id
         except:
-            return None
+            return None, None
 
 
 def delete_memory(memory_hook):
