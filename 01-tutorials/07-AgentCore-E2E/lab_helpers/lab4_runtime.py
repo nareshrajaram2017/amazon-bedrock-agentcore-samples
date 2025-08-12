@@ -25,7 +25,7 @@ model_id = "us.anthropic.claude-3-7-sonnet-20250219-v1:0"
 model = BedrockModel(
     model_id=model_id,
     guardrail_id=guardrail_id,
-    guardrail_version=guardrail_version,
+    # guardrail_version=guardrail_version,
     guardrail_trace="enabled",
 )
 
