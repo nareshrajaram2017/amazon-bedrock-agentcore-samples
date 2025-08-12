@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../../")))
 from scripts.utils import get_ssm_parameter, put_ssm_parameter
 
-ACTOR_ID = "test_user"
+ACTOR_ID = "customer_001"
 SESSION_ID = str(uuid.uuid4())
 
 memory_client = MemoryClient(region_name=REGION)
@@ -56,7 +56,8 @@ def create_or_get_memory_resource():
                     }
                 },
             ]
-            # *** AGENTCORE MEMORY USAGE *** - Create memory resource with semantic strategy
+            print("Creating AgentCore Memory resources. This can a couple of minutes..")
+            # *** AGENTCORE MEMORY USAGE *** - Create memory resource with semantic and user_pref strategy
             response = memory_client.create_memory_and_wait(
                 name=memory_name,
                 description="Customer support agent memory",
@@ -67,14 +68,13 @@ def create_or_get_memory_resource():
             try:
                 put_ssm_parameter("/app/customersupport/agentcore/memory_id", memory_id)
             except:
-                pass
+                raise
             return memory_id
         except:
             return None
 
 
 def delete_memory(memory_hook):
-
     try:
         ssm_client = boto3.client("ssm", region_name=REGION)
 
@@ -183,3 +183,16 @@ class CustomerSupportMemoryHooks(HookProvider):
         registry.add_callback(MessageAddedEvent, self.retrieve_customer_context)
         registry.add_callback(AfterInvocationEvent, self.save_support_interaction)
         logger.info("Customer support memory hooks registered")
+
+
+def get_memory_hooks():
+    """Setup memory resource and return Memory hooks for agent"""
+    memory_id = create_or_get_memory_resource()
+    memory_hooks = MemoryHook(
+        memory_client=memory_client,
+        memory_id=memory_id,
+        actor_id=ACTOR_ID,
+        session_id=SESSION_ID,
+    )
+
+    return memory_hooks
