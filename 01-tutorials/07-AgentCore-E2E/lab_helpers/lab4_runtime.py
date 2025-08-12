@@ -6,6 +6,7 @@ from lab_helpers.lab1_strands_agent import (
     get_product_info,
     get_return_policy,
 )
+from lab_helpers.lab1_guardrails import create_or_get_guardrail_resource
 from lab_helpers.lab2_memory import (
     ACTOR_ID,
     SESSION_ID,
@@ -16,9 +17,17 @@ from lab_helpers.lab2_memory import (
 from strands import Agent
 from strands.models import BedrockModel
 
-# Lab1 import: Create the Bedrock model #TODO: Guardrail
+# Lab1 import: Get Bedrock Guardrail
+guardrail_id, guardrail_version = create_or_get_guardrail_resource()
+
+# Lab1 import: Create the Bedrock model
 model_id = "us.anthropic.claude-3-7-sonnet-20250219-v1:0"
-model = BedrockModel(model_id=model_id)
+model = BedrockModel(
+    model_id=model_id,
+    guardrail_id=guardrail_id,
+    guardrail_version=guardrail_version,
+    guardrail_trace="enabled",
+)
 
 # Lab2 import : Initialize memory via hooks
 memory_id = create_or_get_memory_resource()
