@@ -1,78 +1,46 @@
 from strands.tools import tool
+from ddgs.exceptions import DDGSException, RatelimitException
+from ddgs import DDGS
 
 MODEL_ID = "us.anthropic.claude-3-7-sonnet-20250219-v1:0"
 
 # System prompt defining the agent's role and capabilities
-SYSTEM_PROMPT = """You are a helpful and professional customer support assistant for an e-commerce company.
+SYSTEM_PROMPT = """You are a helpful and professional customer support assistant for an electronics e-commerce company.
 Your role is to:
 - Provide accurate information using the tools available to you
+- Support the customer with technical information and product specifications.
 - Be friendly, patient, and understanding with customers
 - Always offer additional help after answering questions
 - If you can't help with something, direct customers to the appropriate contact
 
 You have access to the following tools:
-1. get_return_policy() - For return policy questions
-2. get_shipping_info() - Get shipping information for a specific order
-3. get_order_status() - To get information about a the status of a specific order
-4. get_product_info() - To get information about a specific product
-
-Always use the appropriate tool to get accurate, up-to-date information rather than guessing."""
+1. get_return_policy() - For warranty and return policy questions
+2. get_product_info() - To get information about a specific product
+3. web_search() - To access current technical documentation, or for updated information. 
+Always use the appropriate tool to get accurate, up-to-date information rather than making assumptions about electronic products or specifications."""
 
 
 @tool
-def get_shipping_info(order_id: str) -> str:
-    """
-    Get shipping information for a specific order.
-
+def web_search(keywords: str, region: str = "us-en", max_results: int = 5) -> str:
+    """Search the web for updated information.
+    
     Args:
-        order_id: The order ID to look up shipping information for
-
+        keywords (str): The search query keywords.
+        region (str): The search region: wt-wt, us-en, uk-en, ru-ru, etc..
+        max_results (int | None): The maximum number of results to return.
     Returns:
-        Formatted string with shipping details including method, cost, and status
+        List of dictionaries with search results.
+    
     """
-    # Mock shipping database - in real implementation, this should query a real shipping system
-    shipping_data = {
-        "12345": {
-            "method": "Standard Shipping",
-            "estimated_delivery": "3-5 business days",
-            "cost": "Free",
-            "status": "Preparing for shipment",
-        },
-        "67890": {
-            "method": "Express Shipping",
-            "estimated_delivery": "1-2 business days",
-            "cost": "$9.99",
-            "tracking_number": "TRK123456789",
-            "status": "In transit",
-        },
-        "11111": {
-            "method": "Priority Shipping",
-            "delivery_date": "Delivered on Jan 14, 2024",
-            "cost": "$14.99",
-            "status": "Delivered",
-        },
-    }
-
-    shipping = shipping_data.get(order_id)
-    if not shipping:
-        return f"Order #{order_id} not found. Please verify the order number."
-
-    # Format response based on shipping status
-    if shipping["status"] == "Delivered":
-        return f"Order #{order_id}: Delivered on {shipping['delivery_date']} via {shipping['method']} (${shipping['cost']})."
-    elif "tracking_number" in shipping:
-        return (
-            f"Order #{order_id}: {shipping['method']} (${shipping['cost']})\n"
-            f"Tracking: {shipping['tracking_number']}\n"
-            f"Estimated delivery: {shipping['estimated_delivery']}\n"
-            f"Status: {shipping['status']}"
-        )
-    else:
-        return (
-            f"Order #{order_id}: {shipping['method']} (${shipping['cost']})\n"
-            f"Estimated delivery: {shipping['estimated_delivery']}\n"
-            f"Status: {shipping['status']}"
-        )
+    try:
+        results = DDGS().text(keywords, region=region, max_results=max_results)
+        return results if results else "No results found."
+    except RatelimitException:
+        return "Rate limit reached. Please try again later."
+    except DDGSException as e:
+        return f"Search error: {e}"
+    except Exception as e:
+        return f"Search error: {str(e)}"
 
 
 @tool
@@ -81,155 +49,107 @@ def get_return_policy(product_category: str) -> str:
     Get return policy information for a specific product category.
 
     Args:
-        product_category: The category of product (e.g., 'electronics', 'clothing', 'books')
+        product_category: Electronics category (e.g., 'smartphones', 'laptops', 'accessories')
 
     Returns:
         Formatted return policy details including timeframes and conditions
     """
-    # Return policy database - in real implementation, this should be stored in a database
-    policies = {
-        "electronics": {
+    # Mock return policy database - in real implementation, this would query policy database
+    return_policies = {
+        "smartphones": {
             "window": "30 days",
-            "condition": "Items must be in original packaging with all accessories",
-            "process": "Contact customer service to initiate return",
-            "refund_time": "5-7 business days after we receive the item",
-            "shipping": "Free return shipping on defective items",
+            "condition": "Original packaging, no physical damage, factory reset required",
+            "process": "Online RMA portal or technical support",
+            "refund_time": "5-7 business days after inspection",
+            "shipping": "Free return shipping, prepaid label provided",
+            "warranty": "1-year manufacturer warranty included"
         },
-        "clothing": {
-            "window": "60 days",
-            "condition": "Items must be unworn, unwashed, and have tags attached",
-            "process": "Use our online return portal or contact customer service",
-            "refund_time": "3-5 business days after we receive the item",
-            "shipping": "Customer pays return shipping unless item is defective",
+         "laptops": {
+            "window": "30 days", 
+            "condition": "Original packaging, all accessories, no software modifications",
+            "process": "Technical support verification required before return",
+            "refund_time": "7-10 business days after inspection",
+            "shipping": "Free return shipping with original packaging",
+            "warranty": "1-year manufacturer warranty, extended options available"
         },
-        "books": {
-            "window": "14 days",
-            "condition": "Books must be in original condition with no writing or damage",
-            "process": "Contact customer service for return authorization",
-            "refund_time": "3-5 business days after we receive the item",
-            "shipping": "Customer pays return shipping",
-        },
+        "accessories": {
+            "window": "30 days",
+            "condition": "Unopened packaging preferred, all components included",
+            "process": "Online return portal",
+            "refund_time": "3-5 business days after receipt",
+            "shipping": "Customer pays return shipping under $50",
+            "warranty": "90-day manufacturer warranty"
+        }
     }
 
     # Default policy for unlisted categories
     default_policy = {
         "window": "30 days",
-        "condition": "Items must be in original condition and packaging",
-        "process": "Contact customer service to initiate return",
-        "refund_time": "5-7 business days after we receive the item",
-        "shipping": "Return shipping policies vary by item",
+        "condition": "Original condition with all included components",
+        "process": "Contact technical support",
+        "refund_time": "5-7 business days after inspection", 
+        "shipping": "Return shipping policies vary",
+        "warranty": "Standard manufacturer warranty applies"
     }
 
-    policy = policies.get(product_category.lower(), default_policy)
-
-    return (
-        f"{product_category} Return Policy:\n\n"
-        f"• Return Window: {policy['window']} from delivery\n"
-        f"• Condition: {policy['condition']}\n"
-        f"• Process: {policy['process']}\n"
-        f"• Refund Time: {policy['refund_time']}\n"
-        f"• Return Shipping: {policy['shipping']}"
-    )
+    policy = return_policies.get(product_category.lower(), default_policy)
+    return f"Return Policy - {product_category.title()}:\n\n" \
+           f"• Return window: {policy['window']} from delivery\n" \
+           f"• Condition: {policy['condition']}\n" \
+           f"• Process: {policy['process']}\n" \
+           f"• Refund timeline: {policy['refund_time']}\n" \
+           f"• Shipping: {policy['shipping']}\n" \
+           f"• Warranty: {policy['warranty']}"
 
 
 @tool
 def get_product_info(product_type: str) -> str:
     """
-    Get detailed information about a specific product type.
+    Get detailed technical specifications and information for electronics products.
 
     Args:
-        product_type: The type of product to get information about
-
+        product_type: Electronics product type (e.g., 'laptops', 'smartphones', 'headphones', 'monitors')
     Returns:
         Formatted product information including warranty, features, and policies
     """
-    # Product catalog - in production, this would query a product database
-    catalog = {
+    # Mock product catalog - in real implementation, this would query a product database
+    products = {
         "laptops": {
-            "warranty": "2-year comprehensive warranty",
-            "models": "13-inch and 15-inch models available",
-            "features": "High-performance processors, SSD storage, premium displays",
-            "shipping": "Free shipping on all orders",
-            "return_policy": "30-day return window",
+            "warranty": "1-year manufacturer warranty + optional extended coverage",
+            "specs": "Intel/AMD processors, 8-32GB RAM, SSD storage, various display sizes",
+            "features": "Backlit keyboards, USB-C/Thunderbolt, Wi-Fi 6, Bluetooth 5.0",
+            "compatibility": "Windows 11, macOS, Linux support varies by model",
+            "support": "Technical support and driver updates included"
         },
-        "phones": {
+        "smartphones": {
             "warranty": "1-year manufacturer warranty",
-            "models": "Multiple models with various storage options",
-            "features": "Advanced cameras, 5G connectivity, long battery life",
-            "shipping": "Free shipping on orders over $50",
-            "return_policy": "14-day return window",
+            "specs": "5G/4G connectivity, 128GB-1TB storage, multiple camera systems",
+            "features": "Wireless charging, water resistance, biometric security",
+            "compatibility": "iOS/Android, carrier unlocked options available",
+            "support": "Software updates and technical support included"
         },
-        "tablets": {
-            "warranty": "1-year warranty (extended coverage available)",
-            "models": "10-inch and 12-inch sizes available",
-            "features": "Touch screens, stylus support, lightweight design",
-            "shipping": "Free shipping on all orders",
-            "return_policy": "30-day return window",
+        "headphones": {
+            "warranty": "1-year manufacturer warranty",
+            "specs": "Wired/wireless options, noise cancellation, 20Hz-20kHz frequency",
+            "features": "Active noise cancellation, touch controls, voice assistant",
+            "compatibility": "Bluetooth 5.0+, 3.5mm jack, USB-C charging",
+            "support": "Firmware updates via companion app"
         },
+        "monitors": {
+            "warranty": "3-year manufacturer warranty",
+            "specs": "4K/1440p/1080p resolutions, IPS/OLED panels, various sizes",
+            "features": "HDR support, high refresh rates, adjustable stands",
+            "compatibility": "HDMI, DisplayPort, USB-C inputs",
+            "support": "Color calibration and technical support"
+        }
     }
-
-    product = catalog.get(product_type.lower())
+    product = products.get(product_type.lower())
     if not product:
-        return f"I don't have specific details for {product_type}. Please contact our product specialists for detailed information."
+        return f"Technical specifications for {product_type} not available. Please contact our technical support team for detailed product information and compatibility requirements."
 
-    return (
-        f"{product_type.title()} Information:\n\n"
-        f"• Warranty: {product['warranty']}\n"
-        f"• Models: {product['models']}\n"
-        f"• Key Features: {product['features']}\n"
-        f"• Shipping: {product['shipping']}\n"
-        f"• Returns: {product['return_policy']}"
-    )
-
-
-@tool
-def get_order_status(order_id: str) -> str:
-    """
-    Get the current status of a customer order.
-
-    Args:
-        order_id: The order ID to check status for
-
-    Returns:
-        Formatted order status information with relevant details
-    """
-    # Order database - in real implementation, this would query a real order management system
-    orders = {
-        "12345": {
-            "status": "processing",
-            "date_ordered": "2024-01-15",
-            "estimated_delivery": "2-3 business days",
-        },
-        "67890": {
-            "status": "shipped",
-            "date_shipped": "2024-01-16",
-            "tracking_number": "TRK123456789",
-            "estimated_delivery": "Tomorrow",
-        },
-        "11111": {
-            "status": "delivered",
-            "delivery_date": "2024-01-14",
-            "delivered_to": "Front door",
-        },
-        "22222": {
-            "status": "returned",
-            "return_date": "2024-01-10",
-            "refund_status": "Processed",
-        },
-    }
-
-    order_info = orders.get(order_id)
-    if not order_info:
-        return f"I couldn't find order #{order_id} in our system. Please check the order number and try again."
-
-    status = order_info["status"]
-    if status == "processing":
-        return f"Order #{order_id} is currently being processed. It was placed on {order_info['date_ordered']} and will ship within {order_info['estimated_delivery']}."
-    elif status == "shipped":
-        return f"Great news! Order #{order_id} was shipped on {order_info['date_shipped']}. Your tracking number is {order_info['tracking_number']} and it should arrive {order_info['estimated_delivery']}."
-    elif status == "delivered":
-        return f"Order #{order_id} was successfully delivered on {order_info['delivery_date']} to your {order_info['delivered_to']}."
-    elif status == "returned":
-        return f"Order #{order_id} was returned on {order_info['return_date']}. Your refund has been {order_info['refund_status'].lower()}."
-
-    return f"Order #{order_id}: {status}"
+    return f"Technical Information - {product_type.title()}:\n\n" \
+           f"• Warranty: {product['warranty']}\n" \
+           f"• Specifications: {product['specs']}\n" \
+           f"• Key Features: {product['features']}\n" \
+           f"• Compatibility: {product['compatibility']}\n" \
+           f"• Support: {product['support']}"
