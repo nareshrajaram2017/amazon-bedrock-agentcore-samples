@@ -86,7 +86,7 @@ deploy_stack() {
 
 # ----- Run both stacks -----
 echo "🔧 Starting deployment of infrastructure stack..."
-deploy_stack "$INFRA_STACK_NAME" "$INFRA_TEMPLATE_FILE" --parameter-overrides LambdaS3Bucket="$FULL_BUCKET_NAME" LambdaS3Key="$S3_KEY" LambdaS3Bucket="$FULL_BUCKET_NAME" LayerS3Key="$S3_KEY"
+deploy_stack "$INFRA_STACK_NAME" "$INFRA_TEMPLATE_FILE" --parameter-overrides LambdaS3Bucket="$FULL_BUCKET_NAME" LambdaS3Key="$S3_KEY"  LayerS3Key="$S3_LAYER_KEY"
 infra_exit_code=$?
 
 echo "🔧 Starting deployment of Cognito stack..."
