@@ -7,6 +7,64 @@ import requests
 import streamlit as st
 from chat_utils import make_urls_clickable, create_safe_markdown_text, get_aws_region, get_ssm_parameter
 
+def invoke_endpoint_streaming(
+        agent_arn: str,
+        payload,
+        session_id: str,
+        bearer_token: str,
+        endpoint_name: str = "DEFAULT",
+    ):
+        """Invoke agent endpoint and yield streaming response chunks."""
+        # Escape agent ARN for URL
+        escaped_arn = urllib.parse.quote(agent_arn, safe="")
+        
+        # Build URL
+        # url = f"{self.dp_endpoint}/runtimes/{escaped_arn}/invocations"
+        url = f"https://bedrock-agentcore.{st.session_state['region']}.amazonaws.com/runtimes/{escaped_arn}/invocations"
+
+        # Headers
+        headers = {
+            "Authorization": f"Bearer {bearer_token}",
+            "Content-Type": "application/json",
+            "X-Amzn-Bedrock-AgentCore-Runtime-Session-Id": session_id,
+        }
+        
+        # Parse the payload string back to JSON object to send properly
+        try:
+            body = json.loads(payload) if isinstance(payload, str) else payload
+        except json.JSONDecodeError:
+            # Fallback for non-JSON strings - wrap in payload object
+            print("Failed to parse payload as JSON, wrapping in payload object")
+            body = {"payload": payload}
+        
+        try:
+            # Make streaming request
+            response = requests.post(
+                url,
+                params={"qualifier": endpoint_name},
+                headers=headers,
+                json=body,
+                timeout=100,
+                stream=True,
+            )
+            response.raise_for_status()
+            
+            # Check if response is streaming
+            if "text/event-stream" in response.headers.get("content-type", ""):
+                # Handle streaming response
+                for line in response.iter_lines(chunk_size=1, decode_unicode=True):
+                    if line and line.startswith("data: "):
+                        chunk = line[6:]  # Remove "data: " prefix
+                        if chunk.strip():  # Only yield non-empty chunks
+                            yield chunk
+            else:
+                # Non-streaming response, yield entire content
+                if response.content:
+                    yield response.text
+                    
+        except requests.exceptions.RequestException as e:
+            print("Failed to invoke agent endpoint: %s", str(e))
+            raise
 
 class ChatManager:
     def __init__(self, agent_name: str = "default"):
