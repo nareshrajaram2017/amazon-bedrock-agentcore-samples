@@ -222,3 +222,5 @@ pyrightconfig.json
 .history
 .ionide
 
+### Zip file for prereq infa deployment
+lambda.zip

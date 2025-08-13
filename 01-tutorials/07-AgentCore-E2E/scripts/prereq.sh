@@ -35,8 +35,10 @@ fi
 
 # ----- 2. Zip Lambda code -----
 echo "📦 Zipping contents of $LAMBDA_SRC into $ZIP_FILE..."
+cd ..
 cd "$LAMBDA_SRC"
 zip -r "../../../$ZIP_FILE" . > /dev/null
+
 cd - > /dev/null
 
 # ----- 3. Upload to S3 -----
@@ -86,7 +88,7 @@ deploy_stack() {
 
 # ----- Run both stacks -----
 echo "🔧 Starting deployment of infrastructure stack..."
-deploy_stack "$INFRA_STACK_NAME" "$INFRA_TEMPLATE_FILE" --parameter-overrides LambdaS3Bucket="$FULL_BUCKET_NAME" LambdaS3Key="$S3_KEY"  LayerS3Key="$S3_LAYER_KEY"
+deploy_stack "$INFRA_STACK_NAME" "$INFRA_TEMPLATE_FILE" --parameter-overrides LambdaS3Bucket="$FULL_BUCKET_NAME" LambdaS3Key="$S3_KEY" LayerS3Key="$S3_LAYER_KEY"
 infra_exit_code=$?
 
 echo "🔧 Starting deployment of Cognito stack..."
