@@ -10,7 +10,6 @@ from scripts.utils import get_ssm_parameter, put_ssm_parameter
 boto_session = Session()
 REGION = boto_session.region_name
 logger = logging.getLogger(__name__)
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../../")))
 
 bedrock_client = boto3.client("bedrock", region_name=REGION)
 

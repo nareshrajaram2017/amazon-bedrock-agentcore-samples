@@ -1,5 +1,4 @@
 from check_warranty import check_warranty_status
-from get_customer_profile import get_customer_profile
 from web_search import web_search
 
 
@@ -19,34 +18,7 @@ def lambda_handler(event, context):
 
     print(resource)
 
-    if resource == "get_customer_profile":
-        customer_id = get_named_parameter(event=event, name="customer_id")
-        email = get_named_parameter(event=event, name="email")
-        phone = get_named_parameter(event=event, name="phone")
-
-        if not customer_id:
-            return {
-                "statusCode": 400,
-                "body": "❌ Please provide customer_id",
-            }
-
-        try:
-            customer_profile = get_customer_profile(
-                customer_id=customer_id, email=email, phone=phone
-            )
-        except Exception as e:
-            print(e)
-            return {
-                "statusCode": 400,
-                "body": f"❌ {e}",
-            }
-
-        return {
-            "statusCode": 200,
-            "body": f"👤 Customer Profile Information: {customer_profile}",
-        }
-
-    elif resource == "check_warranty_status":
+    if resource == "check_warranty_status":
         serial_number = get_named_parameter(event=event, name="serial_number")
         customer_email = get_named_parameter(event=event, name="customer_email")
 
