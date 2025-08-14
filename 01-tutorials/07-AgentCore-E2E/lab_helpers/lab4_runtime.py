@@ -19,9 +19,7 @@ from lab_helpers.lab2_memory import (
 )
 
 # Lab1 import: Create the Bedrock model
-model = BedrockModel(
-    model_id=MODEL_ID
-)
+model = BedrockModel(model_id=MODEL_ID)
 
 # Lab2 import : Initialize memory via hooks
 memory_id = get_ssm_parameter("/app/customersupport/agentcore/memory_id")

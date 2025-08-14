@@ -67,6 +67,23 @@ def invoke_endpoint_streaming(
             raise
 
 class ChatManager:
+    def format_response_text(self, text):
+        """Format response text by unescaping quotes and newlines"""
+        if not text:
+            return text
+        
+        # Remove outer quotes if present
+        if text.startswith('"') and text.endswith('"'):
+            text = text[1:-1]
+        
+        # Unescape common escape sequences
+        text = text.replace('\\n', '\n')
+        text = text.replace('\\"', '"')
+        text = text.replace('\\t', '\t')
+        text = text.replace('\\r', '\r')
+        text = text.replace('\\\\', '\\')
+        
+        return text
     def __init__(self, agent_name: str = "default"):
         self.auth_url_matching = ".amazonaws.com/identities/oauth2/authorize"
         self.agent_name = agent_name
@@ -273,7 +290,9 @@ class ChatManager:
                     time.sleep(0.02)
 
             elapsed = time.time() - start_time
-            clickable_streaming_text = make_urls_clickable(accumulated_response)
+            
+            formatted_response = self.format_response_text(accumulated_response)
+            clickable_streaming_text = make_urls_clickable(formatted_response)
 
             create_safe_markdown_text(
                 f'<div class="assistant-bubble">🤖 {clickable_streaming_text}<br><span style="font-size:0.9em;color:#888;">⏱️ Response time: {elapsed:.2f} seconds</span></div>',
