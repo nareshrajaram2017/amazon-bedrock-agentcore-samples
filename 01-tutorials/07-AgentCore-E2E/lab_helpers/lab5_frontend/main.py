@@ -47,6 +47,22 @@ def build_context(messages, context_window=CONTEXT_WINDOW):
         context += f"{role}: {msg['content']}\n"
     return context
 
+def format_response_text(text):
+    """Format response text by unescaping quotes and newlines"""
+    if not text:
+        return text
+    
+    # Remove outer quotes if present
+    if text.startswith('"') and text.endswith('"'):
+        text = text[1:-1]
+    
+    # Unescape common escape sequences
+    text = text.replace('\\"', '"')
+    text = text.replace('\\n', '\n')
+    text = text.replace('\\t', '\t')
+    text = text.replace('\\r', '\r')
+    
+    return text
 
 with st.sidebar:
     st.text(f"Welcome,\n{authenticator.get_username()}")
@@ -183,6 +199,10 @@ if prompt := st.chat_input("What is up?"):
             # Final response with timing (remove streaming classes)
             elapsed = time.time() - start_time
             answer = formatted_response if formatted_response else (accumulated_response if accumulated_response else "No response received")
+
+            # Format the response to handle escaped characters
+            answer = format_response_text(answer)
+
             clickable_answer = make_urls_clickable(answer)
             message_placeholder.markdown(
                 f'<div class="assistant-bubble">🤖 {clickable_answer}<br><span style="font-size:0.9em;color:#888;">⏱️ Response time: {elapsed:.2f} seconds</span></div>', 
