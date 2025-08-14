@@ -133,8 +133,13 @@ def make_urls_clickable(text):
 
 
 def create_safe_markdown_text(text, message_placeholder):
-    """Create safe markdown text with proper encoding"""
+    """Create safe markdown text with proper encoding and newline handling"""
+    # First encode/decode for safety
     safe_text = text.encode("utf-16", "surrogatepass").decode("utf-16")
-    message_placeholder.markdown(
-        safe_text.replace("\\n", "<br>"), unsafe_allow_html=True
-    )
+    
+    # Convert newlines to HTML breaks for proper rendering
+    # This handles both actual newlines and any remaining escaped ones
+    safe_text = safe_text.replace('\n', '<br>')
+    safe_text = safe_text.replace('\\n', '<br>')
+    
+    message_placeholder.markdown(safe_text, unsafe_allow_html=True)
