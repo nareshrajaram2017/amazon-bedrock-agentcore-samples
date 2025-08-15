@@ -18,8 +18,8 @@ REGION = boto3.session.Session().region_name
 username = "testuser"
 secret_name = "customer_support_agent"
 
-role_name = "CustomerSupportAssistantBedrockAgentCoreRole"
-policy_name = "CustomerSupportAssistantBedrockAgentCorePolicy"
+role_name = f"CustomerSupportAssistantBedrockAgentCoreRole-{REGION}"
+policy_name = f"CustomerSupportAssistantBedrockAgentCorePolicy-{REGION}"
 
 
 def get_ssm_parameter(name: str, with_decryption: bool = True) -> str:

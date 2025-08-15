@@ -9,8 +9,10 @@ def get_streamlit_url():
             domain_id = data['DomainId']
             space_name = data['SpaceName']
     except FileNotFoundError:
-        print("Error: resource-metadata.json file not found")
-        sys.exit(1)
+        print("Resource-metadata.json file not found -- running outside SageMaker Studio")
+        domain_id = None
+        space_name = None
+        # sys.exit(1)
     except json.JSONDecodeError:
         print("Error: Invalid JSON format in resource-metadata.json")
         sys.exit(1)
@@ -24,13 +26,15 @@ def get_streamlit_url():
     print(f"\nPlease use the following to login and test the Streamlit Application")
     print(f"Username:       testuser")
     print(f"Password:       MyPassword123!")
-    sagemaker_client = boto3.client('sagemaker')
-    # Replace 'your-space-name' and 'your-domain-id' with your actual values
-    response = sagemaker_client.describe_space(
-        DomainId=domain_id,
-        SpaceName=space_name
-    )
-    
-    streamlit_url = response['Url']+"/proxy/8501/"
-
+    if domain_id is not None:
+        sagemaker_client = boto3.client('sagemaker')
+        # Replace 'your-space-name' and 'your-domain-id' with your actual values
+        response = sagemaker_client.describe_space(
+            DomainId=domain_id,
+            SpaceName=space_name
+        )
+        
+        streamlit_url = response['Url']+"/proxy/8501/"
+    else:
+        streamlit_url = "http://localhost:8501"
     return streamlit_url

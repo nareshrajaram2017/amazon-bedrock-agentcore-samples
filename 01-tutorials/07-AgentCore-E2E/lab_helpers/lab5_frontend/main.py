@@ -107,7 +107,7 @@ if prompt := st.chat_input("What is up?"):
             bearer_token = st.session_state.get("auth_access_token")
             
             # Show initial thinking state with pulsing animation
-            message_placeholder.markdown(f'<span class="thinking-bubble">🤖 💭 Bedrock Agentcore is thinking...</span>', unsafe_allow_html=True)
+            message_placeholder.markdown(f'<span class="thinking-bubble">🤖 💭 Customer Support Agent is thinking...</span>', unsafe_allow_html=True)
             
             # Stream the response with animations
             chunk_count = 0
