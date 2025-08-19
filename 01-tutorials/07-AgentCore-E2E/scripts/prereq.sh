@@ -6,7 +6,7 @@ INFRA_STACK_NAME=${2:-CustomerSupportStackInfra}
 COGNITO_STACK_NAME=${3:-CustomerSupportStackCognito}
 INFRA_TEMPLATE_FILE="prerequisite/infrastructure.yaml"
 COGNITO_TEMPLATE_FILE="prerequisite/cognito.yaml"
-REGION=$(aws configure get region 2>/dev/null || echo "us-east-1")
+REGION=$(aws configure get region 2>/dev/null || echo "us-west-2")
 ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
 FULL_BUCKET_NAME="${BUCKET_NAME}-${ACCOUNT_ID}-${REGION}"
 ZIP_FILE="lambda.zip"
@@ -20,20 +20,39 @@ echo "Region: $REGION"
 echo "Account ID: $ACCOUNT_ID"
 # ----- 1. Create S3 bucket -----
 echo "🪣 Using S3 bucket: $FULL_BUCKET_NAME"
-if [ "$REGION" = "us-east-1" ]; then
-  aws s3api create-bucket \
-    --bucket "$FULL_BUCKET_NAME" \
-    2>/dev/null || echo "ℹ️ Bucket may already exist or be owned by you."
-else
-  aws s3api create-bucket \
-    --bucket "$FULL_BUCKET_NAME" \
-    --region "$REGION" \
-    --create-bucket-configuration LocationConstraint="$REGION" \
-    2>/dev/null || echo "ℹ️ Bucket may already exist or be owned by you."
-fi
+aws s3api create-bucket \
+--bucket "$FULL_BUCKET_NAME" \
+--region "$REGION" \
+--create-bucket-configuration LocationConstraint="$REGION" \
+2>/dev/null || echo "ℹ️ Bucket may already exist or be owned by you."
 
 # ----- 2. Zip Lambda code -----
-sudo apt install zip
+if command -v zip >/dev/null 2>&1; then
+    echo "✅ zip is already installed"
+else
+    case "$(uname -s)" in
+        Linux*)
+            if command -v apt >/dev/null 2>&1; then
+                sudo apt install -y zip
+            elif command -v yum >/dev/null 2>&1; then
+                sudo yum install -y zip
+            fi
+            ;;
+        Darwin*)  # Mac OS
+            if command -v brew >/dev/null 2>&1; then
+                brew install zip
+            else
+                echo "Please install Homebrew first: https://brew.sh"
+                exit 1
+            fi
+            ;;
+        MINGW*|MSYS*|CYGWIN*)  # Windows
+            echo "Please ensure 7-Zip is installed: https://7-zip.org"
+            exit 1
+            ;;
+    esac
+fi
+
 echo "📦 Zipping contents of $LAMBDA_SRC into $ZIP_FILE..."
 cd "$LAMBDA_SRC"
 zip -r "../../../$ZIP_FILE" . > /dev/null
